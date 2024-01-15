@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.8", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+mongodb = "2.8.0"
+postgres = "0.17.2"
