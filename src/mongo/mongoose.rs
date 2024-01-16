@@ -1,11 +1,11 @@
-use std::collections::HashMap;
 use actix_web::{web, HttpResponse, Responder};
 use bson::{doc, Document};
 use futures::TryStreamExt;
 use mongodb::{options::FindOptions, Cursor};
+use std::collections::HashMap;
 
 pub async fn index() -> impl Responder {
-    "Hello, Actix!"
+    "Hello From MongoDB!"
 }
 
 pub async fn find_one(
