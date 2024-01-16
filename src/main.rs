@@ -1,8 +1,8 @@
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use clap::{Parser, Subcommand};
-use mongo::{actix_server::routes::get_data, mongodb::connect_mongo};
-use std::error::Error;
+use mongo::mongoose::{find_many, find_one, index};
+use mongodb::{options::ClientOptions, Client};
 use std::io;
 mod mongo;
 mod postgresql;
@@ -35,30 +35,37 @@ enum Arguments {
     },
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> io::Result<()> {
     let cli: CLI = CLI::parse();
-    let connect_to_database: Result<(), io::Error> = match &cli.command {
+    let _ = match &cli.command {
         Arguments::Mongodb { uri } => {
-            let mongo_client: mongodb::Client = connect_mongo(&uri).await.unwrap();
+            let client_options: ClientOptions = ClientOptions::parse(&uri).await.unwrap();
+            let client: Client = Client::with_options(client_options).unwrap();
             HttpServer::new(move || {
                 App::new()
-                    .app_data(Data::new(mongo_client.clone()))
-                    .service(get_data)
+                    .app_data(Data::new(client.clone()))
+                    .route("/", web::get().to(index))
+                    .route("/find_one/{database}/{collection}", web::get().to(find_one))
+                    .route(
+                        "/find_many/{database}/{collection}",
+                        web::get().to(find_many),
+                    )
             })
-            .bind(("127.0.0.1", 8080))?
+            .bind(("127.0.0.1", 8080))
+            .unwrap()
             .run()
             .await
         }
         Arguments::MySQL { uri } => {
-            println!("MySQL");
+            println!("MySQL {uri}");
             HttpServer::new(move || App::new())
                 .bind(("", 8080))?
                 .run()
                 .await
         }
         Arguments::Postgres { uri } => {
-            println!("Postgres");
+            println!("Postgres {uri}");
             HttpServer::new(move || App::new())
                 .bind(("", 8080))?
                 .run()
