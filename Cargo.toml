@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.4.8", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-mongodb = "2.8.0"
 postgres = "0.17.2"
+actix-web = "4"
+serde = { version = "1.0.130", features = ["derive"] }
+futures = "0.3"
+mongodb = { version = "2.2.0" }

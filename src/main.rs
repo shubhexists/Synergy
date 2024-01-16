@@ -1,12 +1,9 @@
-use std::{io, thread, time::Duration};
-
-use mongo::mongodb::connect_mongo;
-use ::mongodb::{
-    bson::{doc, Document},
-    Client, Collection,
-};
+use actix_web::web::Data;
+use actix_web::{web, App, HttpServer};
 use clap::{Parser, Subcommand};
-// use mongodb::mongodb::connect_mongo;
+use mongo::{actix_server::routes::get_data, mongodb::connect_mongo};
+use std::error::Error;
+use std::io;
 mod mongo;
 mod postgresql;
 
@@ -38,18 +35,35 @@ enum Arguments {
     },
 }
 
-#[tokio::main]
-async fn main() {
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     let cli: CLI = CLI::parse();
-    let connect_to_database = match &cli.command {
+    let connect_to_database: Result<(), io::Error> = match &cli.command {
         Arguments::Mongodb { uri } => {
-            connect_mongo(&uri).await;
+            let mongo_client: mongodb::Client = connect_mongo(&uri).await.unwrap();
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(Data::new(mongo_client.clone()))
+                    .service(get_data)
+            })
+            .bind(("127.0.0.1", 8080))?
+            .run()
+            .await
         }
         Arguments::MySQL { uri } => {
             println!("MySQL");
+            HttpServer::new(move || App::new())
+                .bind(("", 8080))?
+                .run()
+                .await
         }
         Arguments::Postgres { uri } => {
             println!("Postgres");
+            HttpServer::new(move || App::new())
+                .bind(("", 8080))?
+                .run()
+                .await
         }
     };
+    Ok(())
 }
