@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use clap::{Parser, Subcommand};
-use mongo::mongoose::{find_many, find_one, index};
+use mongo::mongoose::{find_many, find_one, index, insert_one};
 use mongodb::{options::ClientOptions, Client};
 use std::io;
 mod mongo;
@@ -50,6 +50,10 @@ async fn main() -> io::Result<()> {
                     .route(
                         "/find_many/{database}/{collection}",
                         web::get().to(find_many),
+                    )
+                    .route(
+                        "/insert_one/{database}/{collection}",
+                        web::post().to(insert_one),
                     )
             })
             .bind(("127.0.0.1", 8080))

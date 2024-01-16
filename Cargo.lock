@@ -1694,6 +1694,7 @@ dependencies = [
  "futures",
  "mongodb",
  "postgres",
+ "serde_json",
  "tokio",
 ]
 
