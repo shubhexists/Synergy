@@ -1,7 +1,10 @@
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use clap::{Parser, Subcommand};
-use mongo::mongoose::{find_many, find_one, index, insert_one};
+use mongo::mongoose::{
+    delete_many, delete_one, find_many, find_one, get_all_databases, index, insert_many,
+    insert_one, show_collections_in_a_database,
+};
 use mongodb::{options::ClientOptions, Client};
 use std::io;
 mod mongo;
@@ -43,6 +46,7 @@ async fn main() -> io::Result<()> {
             let client_options: ClientOptions = ClientOptions::parse(&uri).await.unwrap();
             let client: Client = Client::with_options(client_options).unwrap();
             HttpServer::new(move || {
+                //wrap in "mongodb"
                 App::new()
                     .app_data(Data::new(client.clone()))
                     .route("/", web::get().to(index))
@@ -55,6 +59,33 @@ async fn main() -> io::Result<()> {
                         "/insert_one/{database}/{collection}",
                         web::post().to(insert_one),
                     )
+                    .route(
+                        "/insert_many/{database}/{collection}",
+                        web::post().to(insert_many),
+                    )
+                    .route(
+                        "/delete_one/{database}/{collection}",
+                        web::delete().to(delete_one),
+                    )
+                    .route(
+                        "/delete_many/{database}/{collection}",
+                        web::delete().to(delete_many),
+                    )
+                    .route("/get_all_databases", web::get().to(get_all_databases))
+                    .route(
+                        "/get_collections/{database}",
+                        web::get().to(show_collections_in_a_database),
+                    )
+            })
+            .bind(("127.0.0.1", 8080))
+            .unwrap()
+            .run()
+            .await
+        }
+        Arguments::Postgres { uri } => {
+            println!("Postgres {uri}");
+            HttpServer::new(move || {
+                App::new().route("", web::get().to(postgresql::postgres::index))
             })
             .bind(("127.0.0.1", 8080))
             .unwrap()
@@ -64,14 +95,7 @@ async fn main() -> io::Result<()> {
         Arguments::MySQL { uri } => {
             println!("MySQL {uri}");
             HttpServer::new(move || App::new())
-                .bind(("", 8080))?
-                .run()
-                .await
-        }
-        Arguments::Postgres { uri } => {
-            println!("Postgres {uri}");
-            HttpServer::new(move || App::new())
-                .bind(("", 8080))?
+                .bind(("127.0.0.1", 8080))?
                 .run()
                 .await
         }
