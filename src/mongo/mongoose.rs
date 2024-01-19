@@ -161,33 +161,34 @@ pub async fn delete_many(
     }
 }
 
-pub async fn update_one(
-    params: web::Path<(String, String)>,
-    client: web::Data<mongodb::Client>,
-    searches: web::Query<HashMap<String, String>>,
-    body: web::Json<Value>,
-) -> impl Responder {
-    let db: mongodb::Database = client.database(&params.0);
-    let collection: mongodb::Collection<Document> = db.collection::<Document>(&params.1);
-    let mut query: Document = doc! {};
-    for (key, value) in searches.iter() {
-        query.insert(key, value);
-    }
-    let data_value_to_be_updated: &Value = body.get("value").unwrap_or_else(|| {
-        panic!("The body should have a `value` tag with the data to be inserted in the collection")
-    });
-    let data_to_be_updated: Document = bson::to_document(data_value_to_be_updated)
-        .map_err(|e| HttpResponse::InternalServerError().body(format!("Error: {}", e)))
-        .unwrap();
-    match collection.update_one(query, data_to_be_updated, None).await {
-        Ok(result) => HttpResponse::Ok().json(doc! {
-            "matched_count": result.matched_count.to_string(),
-            "modified_count": result.modified_count.to_string(),
-            "upserted_id": result.upserted_id.unwrap_or_default().to_string()
-        }),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
-    }
-}
+// THIS SEEMS WRONG 
+// pub async fn update_one(
+//     params: web::Path<(String, String)>,
+//     client: web::Data<mongodb::Client>,
+//     searches: web::Query<HashMap<String, String>>,
+//     body: web::Json<Value>,
+// ) -> impl Responder {
+//     let db: mongodb::Database = client.database(&params.0);
+//     let collection: mongodb::Collection<Document> = db.collection::<Document>(&params.1);
+//     let mut query: Document = doc! {};
+//     for (key, value) in searches.iter() {
+//         query.insert(key, value);
+//     }
+//     let data_value_to_be_updated: &Value = body.get("value").unwrap_or_else(|| {
+//         panic!("The body should have a `value` tag with the data to be inserted in the collection")
+//     });
+//     let data_to_be_updated: Document = bson::to_document(data_value_to_be_updated)
+//         .map_err(|e| HttpResponse::InternalServerError().body(format!("Error: {}", e)))
+//         .unwrap();
+//     match collection.update_one(query, data_to_be_updated, None).await {
+//         Ok(result) => HttpResponse::Ok().json(doc! {
+//             "matched_count": result.matched_count.to_string(),
+//             "modified_count": result.modified_count.to_string(),
+//             "upserted_id": result.upserted_id.unwrap_or_default().to_string()
+//         }),
+//         Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
+//     }
+// }
 
 pub async fn show_collections_in_a_database(
     params: web::Path<String>,

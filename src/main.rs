@@ -1,16 +1,22 @@
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use clap::{Parser, Subcommand};
+use futures::lock::Mutex;
 use mongo::mongoose::{
     delete_many, delete_one, drop_collection, drop_database, find_many, find_one,
-    get_all_databases, index, insert_many, insert_one, show_collections_in_a_database, update_one,
+    get_all_databases, index, insert_many, insert_one, show_collections_in_a_database,
 };
 use mongodb::{options::ClientOptions, Client};
-use postgres::{Client as PostgresClient, NoTls};
+use postgresql::postgres;
 use std::io;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio_postgres::NoTls;
 mod mongo;
 mod postgresql;
+
+pub struct AppState {
+    pub db: Arc<Mutex<tokio_postgres::Client>>,
+}
 
 #[derive(Parser)]
 #[command(author, version, about , long_about=None)]
@@ -74,10 +80,6 @@ async fn main() -> io::Result<()> {
                         )
                         .route("/get_all_databases", web::get().to(get_all_databases))
                         .route(
-                            "/update_one/{database}/{collection}",
-                            web::put().to(update_one),
-                        )
-                        .route(
                             "/get_collections/{database}",
                             web::get().to(show_collections_in_a_database),
                         )
@@ -94,12 +96,23 @@ async fn main() -> io::Result<()> {
             .await
         }
         Arguments::Postgres { uri } => {
-            let client: Arc<Mutex<Result<PostgresClient, postgres::Error>>> =
-                Arc::new(Mutex::new(PostgresClient::connect(&uri, NoTls)));
+            let (client, connection) = tokio_postgres::connect(uri, NoTls)
+                .await
+                .expect("Failed to connect to Postgres.");
+            tokio::spawn(async move {
+                if let Err(e) = connection.await {
+                    eprintln!("Connection error: {}", e);
+                }
+            });
+            let client: Arc<Mutex<tokio_postgres::Client>> = Arc::new(Mutex::new(client));
             HttpServer::new(move || {
                 App::new()
-                    .app_data(Data::new(client.clone()))
-                    .route("/", web::get().to(postgresql::postgres::index))
+                    .app_data(web::Data::new(AppState { db: client.clone() }))
+                    .service(
+                        web::scope("/postgres")
+                            .route("/", web::get().to(postgres::index))
+                            .route("/find_one/{table}", web::get().to(postgres::find_one)),
+                    )
             })
             .bind(("127.0.0.1", 8080))
             .unwrap()

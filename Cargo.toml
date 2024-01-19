@@ -12,5 +12,5 @@ bson = { version = "2.0.0" }
 actix-web = "4"
 clap = {version = "4.4.8", features = ["derive"]}
 futures = "0.3"
-postgres = "0.19.7"
 serde_json = "1.0.111"
+tokio-postgres = "0.7"
