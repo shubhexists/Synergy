@@ -4,7 +4,8 @@ use clap::{Parser, Subcommand};
 use futures::lock::Mutex;
 use mongo::mongoose::{
     delete_many, delete_one, drop_collection, drop_database, find_many, find_one,
-    get_all_databases, index, insert_many, insert_one, show_collections_in_a_database,
+    get_all_databases, index, insert_many, insert_one, show_collections_in_a_database, update_many,
+    update_one,
 };
 use mongodb::{options::ClientOptions, Client};
 use postgresql::postgres;
@@ -14,6 +15,7 @@ use tokio_postgres::NoTls;
 mod mongo;
 mod postgresql;
 
+#[derive(Debug)]
 pub struct AppState {
     pub db: Arc<Mutex<tokio_postgres::Client>>,
 }
@@ -56,7 +58,7 @@ async fn main() -> io::Result<()> {
             HttpServer::new(move || {
                 App::new().app_data(Data::new(client.clone())).service(
                     web::scope("/mongodb")
-                        .route("/", web::get().to(index))
+                        .route("", web::get().to(index))
                         .route("/find_one/{database}/{collection}", web::get().to(find_one))
                         .route(
                             "/find_many/{database}/{collection}",
@@ -87,6 +89,14 @@ async fn main() -> io::Result<()> {
                         .route(
                             "/drop_collection/{database}/{collection}",
                             web::delete().to(drop_collection),
+                        )
+                        .route(
+                            "/update_one/{database}/{collection}",
+                            web::put().to(update_one),
+                        )
+                        .route(
+                            "/update_many/{database}/{collection}",
+                            web::put().to(update_many),
                         ),
                 )
             })
