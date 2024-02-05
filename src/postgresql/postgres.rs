@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::{web, Responder};
 
-use crate::AppState;
+use crate::commands::init::AppState;
 
 pub async fn index() -> impl Responder {
     "Hello from Postgres!"
