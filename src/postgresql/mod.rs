@@ -1,1 +1,2 @@
-pub mod postgres;
+mod postgres;
+pub mod routes;

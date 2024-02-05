@@ -1,5 +1,6 @@
 use super::init::Database;
 use std::io;
+
 pub async fn start() -> io::Result<()> {
     let current_working_directory: std::path::PathBuf =
         std::env::current_dir().expect("Unable to get current directory.");

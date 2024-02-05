@@ -5,6 +5,7 @@ use std::io;
 mod commands;
 mod mongo;
 mod postgresql;
+mod config_text;
 
 
 #[derive(Parser)]

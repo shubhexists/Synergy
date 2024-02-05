@@ -1,3 +1,13 @@
+use crate::{
+    config_text::get_config_file_text, mongo::routes::mongo_config,
+    postgresql::routes::postgres_config,
+};
+use actix_web::{
+    web::{self, Data},
+    App, HttpServer,
+};
+use futures::lock::Mutex;
+use mongodb::{options::ClientOptions, Client};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File},
@@ -5,18 +15,7 @@ use std::{
     path::PathBuf,
     sync::Arc,
 };
-
-use actix_web::{
-    web::{self, Data},
-    App, HttpServer,
-};
-use futures::lock::Mutex;
-use mongodb::{options::ClientOptions, Client};
 use tokio_postgres::NoTls;
-
-use crate::{
-    commands::config_text::get_config_file_text, mongo::routes::mongo_config, postgresql::postgres,
-};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigLayout {
@@ -67,11 +66,7 @@ impl Database {
                 HttpServer::new(move || {
                     App::new()
                         .app_data(web::Data::new(AppState { db: client.clone() }))
-                        .service(
-                            web::scope("/postgres")
-                                .route("/", web::get().to(postgres::index))
-                                .route("/find_one/{table}", web::get().to(postgres::find_one)),
-                        )
+                        .configure(postgres_config)
                 })
                 .bind(("127.0.0.1", 8080))
                 .unwrap()
