@@ -377,12 +377,12 @@ pub async fn increment(
     }
 }
 
-pub async fn pull_elements(
-    client: web::Data<mongodb::Client>,
-    params: web::Path<(String, String)>,
-) -> impl Responder {
-    let db: mongodb::Database = client.database(&params.0);
-    let collection: mongodb::Collection<Document> = db.collection::<Document>(&params.1);
+// pub async fn pull_elements(
+//     client: web::Data<mongodb::Client>,
+//     params: web::Path<(String, String)>,
+// ) -> impl Responder {
+//     let db: mongodb::Database = client.database(&params.0);
+//     let collection: mongodb::Collection<Document> = db.collection::<Document>(&params.1);
     
-    todo!()
-}
+//     todo!()
+// }

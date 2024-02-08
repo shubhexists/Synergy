@@ -1,7 +1,7 @@
 use super::mongoose::{
     delete_many, delete_one, drop_collection, drop_database, find_many, find_one,
-    get_all_databases, index, insert_many, insert_one, pop_first, pop_last, push_element,
-    rename_field, show_collections_in_a_database, update_many, update_one,
+    get_all_databases, increment, index, insert_many, insert_one, pop_first, pop_last,
+    push_element, rename_field, show_collections_in_a_database, update_many, update_one,
 };
 use actix_web::web;
 
@@ -63,6 +63,10 @@ pub fn mongo_config(cfg: &mut web::ServiceConfig) {
             .route(
                 "/push_element/{database}/{collection}/{field}",
                 web::post().to(push_element),
+            )
+            .route(
+                "/increment/{database}/{collection}",
+                web::post().to(increment),
             ),
     );
 }
