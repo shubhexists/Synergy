@@ -1,12 +1,13 @@
 use super::init::Database;
-use std::io;
+use serde_yaml::Value;
+use std::{env, fs, io, path::PathBuf};
 
 pub async fn start() -> io::Result<()> {
-    let current_working_directory: std::path::PathBuf =
-        std::env::current_dir().expect("Unable to get current directory.");
-    let config_file_path: std::path::PathBuf = current_working_directory.join("config.yaml");
-    let file_contents: String = std::fs::read_to_string(config_file_path)?;
-    let config_contents: serde_yaml::Value =
+    let current_working_directory: PathBuf =
+        env::current_dir().expect("Unable to get current directory.");
+    let config_file_path: PathBuf = current_working_directory.join("config.yaml");
+    let file_contents: String = fs::read_to_string(config_file_path)?;
+    let config_contents: Value =
         serde_yaml::from_str(&file_contents).expect("Unable to parse config file.");
     match config_contents["database"].as_str() {
         Some("Mongodb") => {
